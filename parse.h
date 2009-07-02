@@ -1,6 +1,8 @@
 enum type {
   ATOM,
   OPERATOR,
+  NIL,
+  T,
   LIST
 };
 
@@ -8,7 +10,12 @@ enum operator_type {
   ADD,
   SUBTRACT,
   MULTIPLY,
-  DIVIDE
+  DIVIDE,
+  L_THAN,
+  G_THAN,
+  L_THAN_EQ,
+  G_THAN_EQ,
+  IF
 };
 
 enum atom_type {

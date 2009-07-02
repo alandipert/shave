@@ -47,6 +47,11 @@ static char* op_pp(enum operator_type op) {
     case SUBTRACT: return "-";
     case MULTIPLY: return "*";
     case DIVIDE: return "/";
+    case L_THAN: return "<";
+    case G_THAN: return ">";
+    case L_THAN_EQ: return "<=";
+    case G_THAN_EQ: return ">=";
+    case IF: return "if";
     default: return "unknown";
   }
 }
@@ -56,6 +61,14 @@ static void pp(Token *t, int level) {
     case ATOM:
       t_tab(level);
       printf("atom: %g\n", t->n_value);
+      break;
+    case NIL:
+      t_tab(level);
+      printf("NIL\n");
+      break;
+    case T:
+      t_tab(level);
+      printf("T\n");
       break;
     case OPERATOR:
       t_tab(level);
@@ -71,7 +84,6 @@ static void pp(Token *t, int level) {
 
 static void t_pp(Token *t, int level) {
   if(t != NULL) {
-    /*t = t_rewind(t);*/
     do {
       pp(t, level);
     } while ((t = t->next));
@@ -108,7 +120,6 @@ static Token* tokenize(char *input) {
         fprintf(stderr, "unmatched parens\n");
         exit(1);
       } else {
-        /*printf("all parens match\n");*/
         strncpy(buf, m_start, m_count-1);
         buf[m_count-2] = '\0';
         Token *t2 = t_mk();
@@ -139,6 +150,28 @@ static Token* tokenize(char *input) {
       last_token = t_append_op(last_token, MULTIPLY);
     } else if(input[i] == '/') {
       last_token = t_append_op(last_token, DIVIDE);
+    } else if(input[i] == '<') {
+      if(input[i+1] == '=') {
+        last_token = t_append_op(last_token, L_THAN_EQ);
+        i++;
+      } else {
+        last_token = t_append_op(last_token, L_THAN);
+      }
+    } else if(input[i] == '>') {
+      if(input[i+1] == '=') {
+        last_token = t_append_op(last_token, G_THAN_EQ);
+        i++;
+      } else {
+        last_token = t_append_op(last_token, G_THAN);
+      }
+    } else if(input[i] == 'i' && input[i+1] == 'f') {
+      last_token = t_append_op(last_token, IF);
+      i++;
+    } else if(input[i] == 'n' && input[i+1] == 'i' && input[i+2] == 'l') {
+      Token *t2 = t_mk();
+      t2->type = NIL;
+      last_token = t_append(last_token, t2);
+      i += 2;
     }
   }
 
@@ -154,6 +187,7 @@ static Token* process(Token *t) {
       if(head->next) {
         head = head->next;
         double res = 0;
+        int nil = 0;
         switch(o_type) {
           case ADD:
 
@@ -243,6 +277,168 @@ static Token* process(Token *t) {
             t->type = ATOM;
             t->n_value = res;
 
+            break;
+
+          case L_THAN:
+            head = process(head);
+            if(head->type != ATOM) {
+              fprintf(stderr, "unable to resolve list to atom\n");
+              exit(1);
+            } else {
+              res = head->n_value;
+            }
+
+            while((head = head->next)) {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                if(head->n_value == 0) {
+                  fprintf(stderr, "divide by zero\n");
+                  exit(1);
+                }
+
+                if(res < head->n_value) {
+                  nil = 0;
+                } else {
+                  nil = 1;
+                }
+
+                res = head->n_value;
+              }
+            }
+            if(nil) {
+              t->type = NIL;
+            } else {
+              t->type = T;
+            }
+            break;
+
+          case L_THAN_EQ:
+            head = process(head);
+            if(head->type != ATOM) {
+              fprintf(stderr, "unable to resolve list to atom\n");
+              exit(1);
+            } else {
+              res = head->n_value;
+            }
+
+            while((head = head->next)) {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                if(head->n_value == 0) {
+                  fprintf(stderr, "divide by zero\n");
+                  exit(1);
+                }
+
+                if(res <= head->n_value) {
+                  nil = 0;
+                } else {
+                  nil = 1;
+                }
+
+                res = head->n_value;
+              }
+            }
+            if(nil) {
+              t->type = NIL;
+            } else {
+              t->type = T;
+            }
+            break;
+
+          case G_THAN:
+            head = process(head);
+            if(head->type != ATOM) {
+              fprintf(stderr, "unable to resolve list to atom\n");
+              exit(1);
+            } else {
+              res = head->n_value;
+            }
+
+            while((head = head->next)) {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                if(head->n_value == 0) {
+                  fprintf(stderr, "divide by zero\n");
+                  exit(1);
+                }
+
+                if(res > head->n_value) {
+                  nil = 0;
+                } else {
+                  nil = 1;
+                }
+
+                res = head->n_value;
+              }
+            }
+            if(nil) {
+              t->type = NIL;
+            } else {
+              t->type = T;
+            }
+            break;
+            
+          case G_THAN_EQ:
+            head = process(head);
+            if(head->type != ATOM) {
+              fprintf(stderr, "unable to resolve list to atom\n");
+              exit(1);
+            } else {
+              res = head->n_value;
+            }
+
+            while((head = head->next)) {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                if(head->n_value == 0) {
+                  fprintf(stderr, "divide by zero\n");
+                  exit(1);
+                }
+
+                if(res >= head->n_value) {
+                  nil = 0;
+                } else {
+                  nil = 1;
+                }
+
+                res = head->n_value;
+              }
+            }
+            if(nil) {
+              t->type = NIL;
+            } else {
+              t->type = T;
+            }
+            break;
+
+          case IF:
+
+            head = process(head);
+            if(head->type == NIL) {
+              if(head->next->next) {
+                t = process(head->next->next);
+              } else {
+                t->type = NIL;
+              }
+            } else {
+              if(head->next) {
+                t = process(head->next);
+              } else {
+                t->type = NIL;
+              }
+            }
             break;
         }
       } else {
