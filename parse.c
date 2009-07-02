@@ -5,6 +5,14 @@
 #include "parse.h"
 
 static Token* t_mk();
+static Token* t_append(Token *t1, Token *t2);
+static Token* t_rewind(Token *t);
+static void t_tab(int level);
+static char* op_pp(enum operator_type op);
+static void pp(Token *t, int level);
+static void t_pp(Token *t, int level);
+static Token* tokenize(char *input);
+static Token* process(Token *t);
 
 static Token* t_mk() {
   return (Token*)malloc(sizeof(Token));
@@ -18,10 +26,6 @@ static Token* t_append(Token *t1, Token *t2) {
   } else {
     return t2;
   }
-}
-
-//recursively free child tokens
-static void t_free(Token *t) {
 }
 
 static Token* t_rewind(Token *t) {
@@ -39,11 +43,29 @@ static void t_tab(int level) {
 
 static char* op_pp(enum operator_type op) {
   switch(op) {
-    case ADD: return "add";
-    case SUBTRACT: return "subtract";
-    case MULTIPLY: return "multiply";
-    case DIVIDE: return "divide";
+    case ADD: return "+";
+    case SUBTRACT: return "-";
+    case MULTIPLY: return "*";
+    case DIVIDE: return "/";
     default: return "unknown";
+  }
+}
+
+static void pp(Token *t, int level) {
+  switch(t->type) {
+    case ATOM:
+      t_tab(level);
+      printf("atom: %f\n", t->n_value);
+      break;
+    case OPERATOR:
+      t_tab(level);
+      printf("%s\n", op_pp(t->o_type));
+      break;
+    case LIST:
+      t_tab(level);
+      printf("list\n");
+      t_pp(t->head, level+1);
+      break;
   }
 }
 
@@ -51,23 +73,16 @@ static void t_pp(Token *t, int level) {
   if(t != NULL) {
     t = t_rewind(t);
     do {
-      switch(t->type) {
-        case ATOM:
-          t_tab(level);
-          printf("atom: %f\n", t->n_value);
-          break;
-        case OPERATOR:
-          t_tab(level);
-          printf("%s\n", op_pp(t->o_type));
-          break;
-        case LIST:
-          t_tab(level);
-          printf("list\n");
-          t_pp(t->head, level+1);
-          break;
-      }
+      pp(t, level);
     } while ((t = t->next));
   }
+}
+
+static Token* t_append_op(Token *t, enum operator_type o_type) {
+  Token *t2 = t_mk();
+  t2->type = OPERATOR;
+  t2->o_type = o_type;
+  return t_append(t, t2);
 }
 
 static Token* tokenize(char *input) {
@@ -117,10 +132,16 @@ static Token* tokenize(char *input) {
       last_token = t_append(last_token, t2);
       i += m_count;
     } else if (input[i] == '+') {
-      Token *t2 = t_mk();
-      t2->type = OPERATOR;
-      t2->o_type = ADD;
-      last_token = t_append(last_token, t2);
+      last_token = t_append_op(last_token, ADD);
+      i++;
+    } else if(input[i] == '-') {
+      last_token = t_append_op(last_token, SUBTRACT);
+      i++;
+    } else if(input[i] == '*') {
+      last_token = t_append_op(last_token, MULTIPLY);
+      i++;
+    } else if(input[i] == '/') {
+      last_token = t_append_op(last_token, DIVIDE);
       i++;
     }
   }
@@ -128,6 +149,120 @@ static Token* tokenize(char *input) {
   return last_token;
 }
 
+// recursively compute tokens and operators
+static Token* process(Token *t) {
+  if(t->type == LIST) {
+    Token *head = t_rewind(t->head);
+    if(head->type == OPERATOR) {
+      enum operator_type o_type = head->o_type;
+      if(head->next) {
+        head = head->next;
+        double res = 0;
+        switch(o_type) {
+          case ADD:
+
+            do {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                res += head->n_value;
+              }
+            } while((head = head->next));
+            t->type = ATOM;
+            t->n_value = res;
+            break;
+
+          case SUBTRACT:
+
+            head = process(head);
+            if(head->type != ATOM) {
+              fprintf(stderr, "unable to resolve list to atom\n");
+              exit(1);
+            } else {
+              res = head->n_value;
+            }
+
+            while((head = head->next)) {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                res -= head->n_value;
+              }
+            }
+            t->type = ATOM;
+            t->n_value = res;
+            break;
+
+          case MULTIPLY:
+
+            head = process(head);
+            if(head->type != ATOM) {
+              fprintf(stderr, "unable to resolve list to atom\n");
+              exit(1);
+            } else {
+              res = head->n_value;
+            }
+
+            while((head = head->next)) {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                res *= head->n_value;
+              }
+            }
+            t->type = ATOM;
+            t->n_value = res;
+            break;
+
+          case DIVIDE:
+
+            head = process(head);
+            if(head->type != ATOM) {
+              fprintf(stderr, "unable to resolve list to atom\n");
+              exit(1);
+            } else {
+              res = head->n_value;
+            }
+
+            while((head = head->next)) {
+              head = process(head);
+              if(head->type != ATOM) {
+                fprintf(stderr, "unable to resolve list to atom\n");
+                exit(1);
+              } else {
+                if(head->n_value == 0) {
+                  fprintf(stderr, "divide by zero\n");
+                  exit(1);
+                }
+
+                res /= head->n_value;
+              }
+            }
+            t->type = ATOM;
+            t->n_value = res;
+
+            break;
+        }
+      } else {
+        fprintf(stderr, "expecting arguments for %s\n", op_pp(head->o_type));
+        exit(1);
+      }
+    } 
+  } 
+
+  return t;
+}
+
 void eval(char *input) {
-  t_pp(tokenize(input), 0);
+  Token *root = tokenize(input);
+  printf("parse tree:\n");
+  t_pp(root, 0);
+  printf("-----------------\nresult:\n");
+  pp(process(root), 0);
 }
