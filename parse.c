@@ -55,7 +55,7 @@ static void pp(Token *t, int level) {
   switch(t->type) {
     case ATOM:
       t_tab(level);
-      printf("atom: %f\n", t->n_value);
+      printf("atom: %g\n", t->n_value);
       break;
     case OPERATOR:
       t_tab(level);
@@ -71,7 +71,7 @@ static void pp(Token *t, int level) {
 
 static void t_pp(Token *t, int level) {
   if(t != NULL) {
-    t = t_rewind(t);
+    /*t = t_rewind(t);*/
     do {
       pp(t, level);
     } while ((t = t->next));
@@ -113,7 +113,7 @@ static Token* tokenize(char *input) {
         buf[m_count-2] = '\0';
         Token *t2 = t_mk();
         t2->type = LIST;
-        t2->head = tokenize(buf);
+        t2->head = t_rewind(tokenize(buf));
         last_token = t_append(last_token, t2);
       }
       i += m_count;
@@ -152,7 +152,7 @@ static Token* tokenize(char *input) {
 // recursively compute tokens and operators
 static Token* process(Token *t) {
   if(t->type == LIST) {
-    Token *head = t_rewind(t->head);
+    Token *head = t->head;
     if(head->type == OPERATOR) {
       enum operator_type o_type = head->o_type;
       if(head->next) {
