@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include "parse.h"
 
+#define MAX_BUFFER_SIZE 1024
+
 static Token* t_mk();
 static Token* t_append(Token *t1, Token *t2);
 static Token* t_rewind(Token *t);
@@ -14,8 +16,7 @@ static void t_pp(Token *t, int level);
 static Token* tokenize(char *input);
 static Token* process(Token *t);
 
-static PARSE_ERROR = 0;
-static EVAL_ERROR = 0;
+static int PARSE_ERROR = 0;
 
 static Token* t_mk() {
   return (Token*)malloc(sizeof(Token));
@@ -78,6 +79,7 @@ static void pp(Token *t, int level) {
       printf("%s:\n", op_pp(t->o_type));
       break;
     case LIST:
+      printf("\n");
       t_tab(level);
       printf("list:\n");
       t_pp(t->head, level+1);
@@ -105,7 +107,7 @@ static Token* tokenize(char *input) {
   char *m_start;
   m_count = 0;
   Token *last_token = NULL;
-  char buf[100];
+  char buf[MAX_BUFFER_SIZE];
   for(i = 0; i < strlen(input); i++) {
     if(input[i] == '(') {
       int p_count = 1;
@@ -458,9 +460,11 @@ static Token* process(Token *t) {
 void eval(char *input) {
   Token *root = tokenize(input);
   /*printf("parse tree:\n");*/
-  /*t_pp(root, 0);*/
+  t_pp(root, 0);
   /*printf("-----------------\nresult:\n");*/
   if(!PARSE_ERROR) {
     pp(process(root), 0);
+  } else {
+    PARSE_ERROR = 0;
   }
 }

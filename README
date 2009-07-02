@@ -1,0 +1,30 @@
+shave
+
+This is the beginnings of a LISP interpreter.  It's kind of full of garbage right now, because I got impatient and started copy-pasting.  The lexer is handwritten, so yeah, it rules.  The generated AST is a big linked list, which is evaluated in the eval step.  The AST is made up of 'Token' structs, which have type and property enums used by the eval routines.
+
+compile:
+
+  $ make
+
+use:
+
+  $ ./shave
+  shave.
+  > (if (> 3 2) (/ 9 (+ 3 2)))
+  list:
+    if:
+
+    list:
+      >:
+      atom: 3
+      atom: 2
+
+    list:
+      /:
+      atom: 9
+
+      list:
+        +:
+        atom: 3
+        atom: 2
+  atom: 1.8

@@ -10,17 +10,21 @@
 
 int main(int argc, char *argv[])
 {
-  int size;
-  char buf[MAX_BUFFER_SIZE+1];
+  if(argc > 1) {
+    eval(argv[1]);
+  } else {
+    int size;
+    char buf[MAX_BUFFER_SIZE+1];
 
-  printf("shave.");
-  printf("\n> ");
-  fflush(stdout);
-  while ((size = read(fileno(stdin), buf, MAX_BUFFER_SIZE)) >  0) {
-    buf[size]='\0';
-    eval(buf);
+    printf("shave.");
     printf("\n> ");
     fflush(stdout);
+    while ((size = read(fileno(stdin), buf, MAX_BUFFER_SIZE)) >  0) {
+      buf[size]='\0';
+      eval(buf);
+      printf("\n> ");
+      fflush(stdout);
+    }
   }
 
   return 0;
