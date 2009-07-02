@@ -2,6 +2,15 @@ shave
 
 This is the beginnings of a LISP interpreter.  It's kind of full of garbage right now, because I got impatient and started copy-pasting.  The lexer is handwritten, so yeah, it rules.  The generated AST is a big linked list, which is evaluated in the eval step.  The AST is made up of 'Token' structs, which have type and property enums used by the eval routines.
 
+My end goal here is to make the cleanest, smallest, and simplest implementation of LISP that would handle the recursive computation of a factorial:
+
+ (defun factorial (n)
+     (if (<= n 1)
+             1
+          (* n (factorial (- n 1)))))
+
+There's a ways to go; namely cleanup and implementing defun.
+
 compile:
 
   $ make
