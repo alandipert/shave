@@ -59,11 +59,11 @@ static void pp(Token *t, int level) {
       break;
     case OPERATOR:
       t_tab(level);
-      printf("%s\n", op_pp(t->o_type));
+      printf("%s:\n", op_pp(t->o_type));
       break;
     case LIST:
       t_tab(level);
-      printf("list\n");
+      printf("list:\n");
       t_pp(t->head, level+1);
       break;
   }
@@ -116,7 +116,7 @@ static Token* tokenize(char *input) {
         t2->head = t_rewind(tokenize(buf));
         last_token = t_append(last_token, t2);
       }
-      i += m_count;
+      i += m_count-1;
     } else if(isdigit(input[i])) {
       m_start = &input[i];
       m_count = 1;
@@ -130,19 +130,15 @@ static Token* tokenize(char *input) {
       buf[m_count] = '\0';
       t2->n_value = atof(buf);
       last_token = t_append(last_token, t2);
-      i += m_count;
+      i += m_count-1;
     } else if (input[i] == '+') {
       last_token = t_append_op(last_token, ADD);
-      i++;
     } else if(input[i] == '-') {
       last_token = t_append_op(last_token, SUBTRACT);
-      i++;
     } else if(input[i] == '*') {
       last_token = t_append_op(last_token, MULTIPLY);
-      i++;
     } else if(input[i] == '/') {
       last_token = t_append_op(last_token, DIVIDE);
-      i++;
     }
   }
 
