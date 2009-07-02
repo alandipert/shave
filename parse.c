@@ -14,6 +14,9 @@ static void t_pp(Token *t, int level);
 static Token* tokenize(char *input);
 static Token* process(Token *t);
 
+static PARSE_ERROR = 0;
+static EVAL_ERROR = 0;
+
 static Token* t_mk() {
   return (Token*)malloc(sizeof(Token));
 }
@@ -118,7 +121,8 @@ static Token* tokenize(char *input) {
       }
       if(p_count) {
         fprintf(stderr, "unmatched parens\n");
-        exit(1);
+        /*exit(1);*/
+        PARSE_ERROR = 1;
       } else {
         strncpy(buf, m_start, m_count-1);
         buf[m_count-2] = '\0';
@@ -195,7 +199,7 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 res += head->n_value;
               }
@@ -209,7 +213,7 @@ static Token* process(Token *t) {
             head = process(head);
             if(head->type != ATOM) {
               fprintf(stderr, "unable to resolve list to atom\n");
-              exit(1);
+              /*exit(1);*/
             } else {
               res = head->n_value;
             }
@@ -218,7 +222,7 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 res -= head->n_value;
               }
@@ -232,7 +236,7 @@ static Token* process(Token *t) {
             head = process(head);
             if(head->type != ATOM) {
               fprintf(stderr, "unable to resolve list to atom\n");
-              exit(1);
+              /*exit(1);*/
             } else {
               res = head->n_value;
             }
@@ -241,7 +245,7 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 res *= head->n_value;
               }
@@ -255,7 +259,7 @@ static Token* process(Token *t) {
             head = process(head);
             if(head->type != ATOM) {
               fprintf(stderr, "unable to resolve list to atom\n");
-              exit(1);
+              /*exit(1);*/
             } else {
               res = head->n_value;
             }
@@ -264,11 +268,11 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 if(head->n_value == 0) {
                   fprintf(stderr, "divide by zero\n");
-                  exit(1);
+                  /*exit(1);*/
                 }
 
                 res /= head->n_value;
@@ -283,7 +287,7 @@ static Token* process(Token *t) {
             head = process(head);
             if(head->type != ATOM) {
               fprintf(stderr, "unable to resolve list to atom\n");
-              exit(1);
+              /*exit(1);*/
             } else {
               res = head->n_value;
             }
@@ -292,11 +296,11 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 if(head->n_value == 0) {
                   fprintf(stderr, "divide by zero\n");
-                  exit(1);
+                  /*exit(1);*/
                 }
 
                 if(res < head->n_value) {
@@ -319,7 +323,7 @@ static Token* process(Token *t) {
             head = process(head);
             if(head->type != ATOM) {
               fprintf(stderr, "unable to resolve list to atom\n");
-              exit(1);
+              /*exit(1);*/
             } else {
               res = head->n_value;
             }
@@ -328,11 +332,11 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 if(head->n_value == 0) {
                   fprintf(stderr, "divide by zero\n");
-                  exit(1);
+                  /*exit(1);*/
                 }
 
                 if(res <= head->n_value) {
@@ -355,7 +359,7 @@ static Token* process(Token *t) {
             head = process(head);
             if(head->type != ATOM) {
               fprintf(stderr, "unable to resolve list to atom\n");
-              exit(1);
+              /*exit(1);*/
             } else {
               res = head->n_value;
             }
@@ -364,11 +368,11 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 if(head->n_value == 0) {
                   fprintf(stderr, "divide by zero\n");
-                  exit(1);
+                  /*exit(1);*/
                 }
 
                 if(res > head->n_value) {
@@ -391,7 +395,7 @@ static Token* process(Token *t) {
             head = process(head);
             if(head->type != ATOM) {
               fprintf(stderr, "unable to resolve list to atom\n");
-              exit(1);
+              /*exit(1);*/
             } else {
               res = head->n_value;
             }
@@ -400,11 +404,11 @@ static Token* process(Token *t) {
               head = process(head);
               if(head->type != ATOM) {
                 fprintf(stderr, "unable to resolve list to atom\n");
-                exit(1);
+                /*exit(1);*/
               } else {
                 if(head->n_value == 0) {
                   fprintf(stderr, "divide by zero\n");
-                  exit(1);
+                  /*exit(1);*/
                 }
 
                 if(res >= head->n_value) {
@@ -443,7 +447,7 @@ static Token* process(Token *t) {
         }
       } else {
         fprintf(stderr, "expecting arguments for %s\n", op_pp(head->o_type));
-        exit(1);
+        /*exit(1);*/
       }
     } 
   } 
@@ -453,8 +457,10 @@ static Token* process(Token *t) {
 
 void eval(char *input) {
   Token *root = tokenize(input);
-  printf("parse tree:\n");
-  t_pp(root, 0);
-  printf("-----------------\nresult:\n");
-  pp(process(root), 0);
+  /*printf("parse tree:\n");*/
+  /*t_pp(root, 0);*/
+  /*printf("-----------------\nresult:\n");*/
+  if(!PARSE_ERROR) {
+    pp(process(root), 0);
+  }
 }
